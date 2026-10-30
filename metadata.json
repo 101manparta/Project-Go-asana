@@ -1,0 +1,7 @@
+{
+  "name": "Prana Studio | AI-Powered Yoga & Wellness Platform",
+  "description": "Premium digital yoga experience combining class discovery, real-time booking, instructor schedules, memberships, and personalized AI yoga guidance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

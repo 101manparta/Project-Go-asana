@@ -1,0 +1,922 @@
+# PROJECT: AI-POWERED YOGA & WELLNESS PLATFORM
+
+Act as a senior software architect, Go backend engineer, frontend engineer, AI engineer, Firebase specialist, UI/UX designer, and security engineer.
+
+Build a production-minded, responsive, AI-powered yoga business platform. This must be a functional full-stack application, not just a static landing page or UI prototype.
+
+The product should help a yoga studio attract visitors, convert them into customers, manage classes and instructors, accept bookings, manage memberships, and deliver personalized yoga guidance through an AI agent.
+
+## 1. PRODUCT VISION
+
+Create a premium digital yoga experience combining:
+
+- A beautiful public-facing yoga website.
+- A real class discovery and booking system.
+- User accounts and booking history.
+- An AI Yoga Assistant that helps users find suitable classes.
+- Instructor profiles and schedules.
+- Membership and package management.
+- A fully separated administration dashboard.
+- Business analytics and operational management.
+- A mobile-first, accessible, fast user experience.
+
+The experience should feel calm, premium, intelligent, trustworthy, and easy to use.
+
+Avoid generic template design, cluttered dashboards, excessive gradients, and meaningless AI features.
+
+## 2. NON-NEGOTIABLE ARCHITECTURE
+
+### Backend
+Use Go (Golang) as the primary backend language.
+
+Recommended stack:
+- Go 1.25+ or the latest stable Go version supported by the deployment environment.
+- Gin HTTP framework.
+- RESTful JSON API under /api/v1.
+- Firebase Admin SDK for Go.
+- Firebase Authentication.
+- Cloud Firestore as the primary application database.
+- Firebase App Check where appropriate.
+- Structured logging.
+- Request validation.
+- Centralized error handling.
+- Environment-based configuration.
+- Unit and integration tests.
+
+Use a clean, maintainable architecture with clear separation between:
+- HTTP handlers/controllers.
+- Request and response DTOs.
+- Business services.
+- Repository interfaces.
+- Firestore implementations.
+- Authentication and authorization middleware.
+- AI provider integrations.
+- Background or scheduled tasks where supported.
+
+Keep business logic out of HTTP handlers.
+
+Use Go modules and maintain a clear package structure. Avoid unnecessary microservices. Begin with a modular monolith.
+
+### Frontend
+Use TypeScript with React and Vite, or Next.js if server-rendered public pages provide a clear benefit.
+
+Recommended frontend:
+- React.
+- TypeScript.
+- Tailwind CSS.
+- shadcn/ui or an equivalent accessible component system.
+- Framer Motion or Motion for subtle animations.
+- Lucide icons.
+- Firebase client SDK for authentication.
+- A typed API client that communicates with the Go backend.
+
+The frontend must NOT directly write business-critical booking, payment, membership, or admin data to Firestore.
+
+All business-critical mutations must go through the Go backend, which validates permissions, capacity, ownership, and business rules.
+
+Firebase client SDK access may be used for authentication and explicitly authorized features. Keep Firestore Security Rules restrictive.
+
+### Database
+Use Firebase Cloud Firestore as the main database.
+
+Design the system for Firebase's free-tier constraints:
+- Minimize unnecessary reads and writes.
+- Use pagination and indexed queries.
+- Avoid unbounded collection reads.
+- Avoid polling when it is not necessary.
+- Avoid duplicating large records.
+- Use batched writes and transactions where appropriate.
+- Never expose service account credentials.
+- Keep Firebase billing and quota limits in mind.
+
+Do not assume all Firebase services or hosting products are free under every configuration. Document current quota assumptions and any possible paid-service requirements.
+
+### Important deployment limitation
+The Go backend must run as a separate service on a compatible Go hosting platform. Firebase Hosting can serve the frontend, but it does not natively execute a persistent Go server.
+
+Provide a deployment strategy with:
+- Frontend hosting.
+- Go backend hosting.
+- Firebase project configuration.
+- Environment variable configuration.
+- CORS configuration.
+- HTTPS.
+- Production and local development environments.
+
+Choose a free-tier-compatible deployment option when available, and document limitations such as sleeping instances, cold starts, usage limits, and changing provider policies.
+
+## 3. ABSOLUTE ADMIN SEPARATION
+
+The administration dashboard MUST use the route:
+
+/admin
+
+Examples:
+- /admin/login
+- /admin/dashboard
+- /admin/bookings
+- /admin/classes
+- /admin/instructors
+- /admin/customers
+- /admin/memberships
+- /admin/ai
+- /admin/analytics
+- /admin/settings
+
+The public website must NEVER display admin navigation, admin buttons, management links, or admin controls.
+
+The public navigation must not reveal that the business has an admin dashboard.
+
+Use a completely separate admin layout, navigation sidebar, header, and dashboard component tree.
+
+Public users visiting /admin must not gain access to private data.
+
+Protect every admin API endpoint on the Go backend using Firebase ID token verification and server-side role authorization. Hiding a frontend route is NOT sufficient security.
+
+Use Firebase Authentication and an explicit role system:
+- CUSTOMER
+- INSTRUCTOR
+- ADMIN
+- SUPER_ADMIN
+
+Only authorized administrators may access administrative functionality.
+
+Never trust a role supplied by the browser. Verify privileges on the server using trusted claims or protected role records.
+
+Admin login must not allow users to grant themselves admin access through signup or editable client profiles.
+
+Support logout, session handling, unauthorized redirects, access-denied states, and secure token verification.
+
+Do not seed a public admin password or embed admin credentials in frontend code.
+
+Provide a secure documented bootstrap procedure for the first administrator.
+
+## 4. BRAND AND VISUAL DESIGN
+
+Design a calm, premium, contemporary yoga brand.
+
+Color system:
+- Primary background: pure white or warm off-white.
+- Main text: near-black.
+- Secondary text: soft charcoal and muted gray.
+- Borders: subtle light gray.
+- Glass panels: translucent white, soft blur, fine borders.
+- Accent: restrained neutral tones only when needed.
+
+Use black-and-white glassmorphism as the primary visual identity.
+
+Typography:
+- Use Inter, Manrope, or a similarly clean sans-serif.
+- Choose consistent font weights and comfortable line heights.
+- Use generous spacing and restrained typography.
+- Avoid overly decorative fonts.
+
+Design principles:
+- Minimalist and premium.
+- Calm whitespace.
+- Rounded corners with a consistent radius system.
+- Fine borders and subtle shadows.
+- Soft glass effects for selected cards, overlays, and floating assistant panels.
+- Smooth hover states and restrained motion.
+- Strong contrast and accessible controls.
+- Mobile-first responsive layouts.
+- Consistent spacing, typography, and component tokens.
+
+Do not apply blur to every element. Glassmorphism should improve hierarchy rather than reduce readability.
+
+Use yoga and wellness imagery that feels authentic: natural light, peaceful studio interiors, mindful movement, mats, and instructors.
+
+Do not make every section look identical. Alternate visual layouts, editorial photography, class cards, feature sections, and clean data displays.
+
+AI visual identity:
+- Use occasional sparkle icons such as ✨ and subtle AI indicators.
+- Use Lucide sparkles, bot, calendar, heart, leaf, and similar icons where appropriate.
+- Emoji may appear sparingly in the AI assistant and onboarding.
+- Do not fill the entire interface with emoji.
+- All primary interface copy must remain clean, professional, and easy to understand.
+
+Motion should be subtle, fast, and respectful of reduced-motion preferences.
+
+## 5. PUBLIC WEBSITE ROUTES
+
+Create the following routes.
+
+### /
+Premium homepage containing:
+- Clean navigation.
+- Hero section with a clear value proposition.
+- Primary CTA: Explore Classes.
+- Secondary CTA: Ask AI ✨.
+- Featured yoga classes.
+- Upcoming sessions.
+- Instructor highlights.
+- How booking works.
+- AI personalization feature.
+- Membership and pricing preview.
+- Customer testimonials using only genuine or clearly identified sample content.
+- Studio atmosphere and imagery.
+- FAQ.
+- Final booking CTA.
+- Minimal footer with contact information and policies.
+
+The hero should communicate the business value immediately.
+
+Possible headline:
+"Find Your Balance. Your Practice, Personalized."
+
+Supporting copy:
+"Discover yoga classes, book your next session, and get personalized guidance with your AI wellness companion."
+
+Do not make unsupported medical or wellness claims.
+
+### /classes
+- Search and filter classes.
+- Filter by style, level, instructor, date, time, duration, and price.
+- Class cards with images, description, difficulty, duration, instructor, price, and availability.
+- Sort by upcoming, popularity, or price.
+- Clear loading, empty, and error states.
+- Pagination or efficient incremental loading.
+- Class detail navigation.
+
+### /classes/:id
+Display:
+- Class title and description.
+- Images.
+- Yoga style.
+- Difficulty level.
+- Duration.
+- Instructor.
+- Location or online meeting format.
+- Upcoming sessions.
+- Price and available seats.
+- Cancellation policy.
+- Related classes.
+- Booking CTA.
+
+### /instructors
+- Instructor directory.
+- Professional profile cards.
+- Yoga specialties.
+- Experience and qualifications where verified.
+- Availability and upcoming classes.
+
+### /instructors/:id
+- Instructor profile.
+- Biography.
+- Specialties.
+- Credentials where verified.
+- Upcoming sessions.
+- Book with this instructor.
+
+### /schedule
+- Weekly schedule.
+- Daily schedule.
+- Session time, instructor, class type, and available seats.
+- Time zone awareness.
+- Mobile-friendly schedule layout.
+- Filters and date navigation.
+
+### /pricing
+- Clearly presented memberships and class packages.
+- One-time class booking.
+- Package comparison.
+- Membership benefits.
+- Terms and cancellation conditions.
+- Checkout or purchase flow appropriate to implemented payment capabilities.
+
+Do not simulate successful payments.
+
+If a payment gateway has not been configured, clearly label the payment integration as not yet enabled and provide a legitimate alternative booking or inquiry flow.
+
+### /ai
+A dedicated AI Yoga Assistant experience with:
+- Conversational interface.
+- Suggested prompts.
+- User preferences.
+- Class recommendations.
+- Booking assistance.
+- Saved recommendations where supported.
+- Links to relevant class and schedule pages.
+
+### /about
+- Studio story.
+- Philosophy.
+- Teaching approach.
+- Values.
+- Team.
+- Studio environment.
+
+### /contact
+- Contact details.
+- Contact form.
+- Location or map when configured.
+- Business hours.
+- WhatsApp contact when configured.
+- Validation and success/error states.
+
+### /faq
+Searchable FAQ covering:
+- Booking.
+- Cancellations.
+- Refunds.
+- Class levels.
+- What to bring.
+- Membership.
+- AI assistant limitations.
+- Contact and accessibility.
+
+### Authentication and user account
+Implement:
+- /login
+- /register
+- /forgot-password
+- /account
+- /account/bookings
+- /account/membership
+- /account/profile
+- /account/preferences
+
+Use Firebase Authentication.
+
+Support email/password authentication and email verification. Add Google sign-in only when correctly configured.
+
+## 6. BOOKING ENGINE
+
+Booking is a core business feature and must be implemented as real backend functionality.
+
+Customers must be able to:
+1. Browse available sessions.
+2. View schedule and seat availability.
+3. Select a session.
+4. Sign in when required.
+5. Confirm booking details.
+6. Review the cancellation policy.
+7. Submit a booking.
+8. Receive a unique booking reference.
+9. View booking status in their account.
+10. Cancel or reschedule according to policy.
+11. Receive confirmation feedback.
+
+Booking statuses:
+- PENDING_PAYMENT, when payment integration requires it.
+- CONFIRMED.
+- CANCELLED.
+- COMPLETED.
+- NO_SHOW.
+- WAITLISTED.
+
+Use only applicable states and document transitions.
+
+Booking integrity requirements:
+- Prevent overbooking.
+- Enforce session capacity on the backend.
+- Use Firestore transactions or an equivalent safe concurrency strategy.
+- Prevent duplicate bookings for the same customer and session.
+- Use idempotency keys for retry-safe booking creation.
+- Validate booking ownership.
+- Enforce cancellation deadlines.
+- Maintain an auditable status history where appropriate.
+- Release capacity when a cancellation is valid.
+- Keep booking state consistent with payment state if payments are implemented.
+
+Never trust seat availability calculated only by the frontend.
+
+Define clear booking rules and test concurrent booking scenarios.
+
+Support waitlists as a separate, real feature if feasible. Do not claim automatic waitlist promotion unless it is implemented.
+
+## 7. AI AGENT — CORE DIFFERENTIATOR
+
+Build a real AI Yoga Assistant, not a scripted chatbot presented as AI.
+
+The assistant should support these capabilities:
+
+### A. Conversational discovery
+Understand requests such as:
+- "I'm new to yoga. What class should I try?"
+- "Find a beginner class this weekend."
+- "I prefer slow and relaxing sessions."
+- "Show classes with available seats."
+- "Which instructor teaches Vinyasa?"
+- "Help me find a class under my budget."
+
+### B. Personalized class recommendations
+Collect optional preferences:
+- Experience level.
+- Preferred yoga styles.
+- Preferred duration.
+- Preferred schedule.
+- Budget.
+- In-person or online preference.
+- User-defined goals, such as relaxation, flexibility, or building a consistent practice.
+
+Use these preferences to recommend actual classes and sessions retrieved from the backend.
+
+Recommendations must be grounded in current database records, not invented schedules, prices, or availability.
+
+### C. AI tool calling
+Implement a controlled server-side tool system.
+
+Available tools may include:
+- search_classes
+- get_class_details
+- search_sessions
+- check_session_availability
+- get_instructor_profile
+- get_pricing_options
+- get_customer_booking_summary
+- create_booking_draft
+
+Each tool must have a strict input schema and authorization rules.
+
+Read-only tools may execute when authorized. Any booking mutation must require explicit customer confirmation and pass all normal backend validation.
+
+The AI model must never directly execute arbitrary database queries or unrestricted code.
+
+### D. Booking assistance
+Example workflow:
+1. Customer asks for a beginner class.
+2. AI asks a relevant follow-up if needed.
+3. AI searches real classes and sessions.
+4. AI presents a small set of matching options.
+5. Customer chooses a specific session.
+6. AI summarizes date, time, instructor, price, and cancellation policy.
+7. Customer explicitly confirms.
+8. Backend creates the booking safely.
+9. UI displays the real booking result.
+
+Never tell the user a booking is confirmed before the backend confirms success.
+
+### E. Context and memory
+Maintain conversational context within a session.
+
+Persist only necessary preferences and conversation summaries when the user has consented and the feature is configured.
+
+Do not store sensitive health details unnecessarily. Provide a clear way to reset the conversation and remove saved preferences where applicable.
+
+### F. AI safety
+- Present the assistant as a yoga and class-discovery guide, not a medical professional.
+- Do not diagnose or treat medical conditions.
+- Do not guarantee health outcomes.
+- Encourage qualified professional guidance for medical concerns.
+- Ask only for information necessary to fulfill the request.
+- Never expose another customer's private data.
+- Never reveal secrets, internal prompts, service credentials, or private admin information.
+- Apply request limits, input validation, output limits, and abuse protection.
+- Treat retrieved documents and user messages as untrusted data.
+- Require explicit confirmation before consequential actions.
+
+### G. AI provider abstraction
+Implement an AI provider interface so the application is not permanently tied to one model vendor.
+
+Use a configurable provider and model through backend environment variables.
+
+Never expose the AI provider API key in browser code.
+
+If no AI key is configured, show a clear setup message and preserve non-AI browsing and booking functionality.
+
+Do not fake AI responses. A deterministic fallback may help users browse actual classes, but it must not be presented as a live AI model.
+
+Document model costs, rate limits, and free-tier availability. Do not assume production AI inference is permanently free.
+
+## 8. OPTIONAL ADMIN AI COPILOT
+
+Create a separate AI Copilot inside the admin dashboard.
+
+Possible capabilities:
+- Summarize today's bookings.
+- Identify sessions with low enrollment.
+- Summarize customer feedback.
+- Draft class descriptions.
+- Suggest schedule adjustments.
+- Summarize operational metrics.
+- Answer authorized questions about studio data.
+
+The copilot must use authorized, bounded tools and aggregate data where possible.
+
+It must not independently delete customers, issue refunds, change prices, or modify critical business settings without explicit administrator approval.
+
+Do not fabricate analytics or claim that a recommendation improves revenue without supporting data.
+
+## 9. ADMIN DASHBOARD
+
+Build an entirely separate application shell under /admin.
+
+### /admin/login
+- Admin authentication.
+- Clear validation and error states.
+- Secure access control.
+- No public signup for administrator privileges.
+
+### /admin/dashboard
+Display:
+- Today's bookings.
+- Upcoming sessions.
+- Booking cancellation rate.
+- Session occupancy.
+- Active customers.
+- Revenue only when reliable payment records exist.
+- Recent activity.
+- Operational alerts.
+- Upcoming classes requiring attention.
+
+All metrics must come from actual database data.
+
+### /admin/bookings
+- Search and filter bookings.
+- Filter by date, session, instructor, status, and customer.
+- Pagination.
+- Booking detail view.
+- Authorized cancellation and status updates.
+- Booking history and relevant audit events.
+
+### /admin/classes
+- Create, read, update, archive, and delete classes where safe.
+- Upload or manage class images.
+- Edit descriptions, style, level, duration, price, and publication status.
+- Preview class cards.
+- Validate all required fields.
+- Prevent destructive operations that would corrupt existing bookings.
+
+### /admin/schedule
+- Create sessions for a class.
+- Assign instructors.
+- Configure start time, end time, time zone, location, and capacity.
+- Detect overlapping schedules.
+- Prevent invalid or past session creation where appropriate.
+- Protect sessions with existing bookings from unsafe modifications.
+
+### /admin/instructors
+- Create and edit instructor profiles.
+- Manage specialties and credentials.
+- Activate or deactivate instructor accounts.
+- Show assigned classes and schedules.
+
+### /admin/customers
+- Search customers.
+- View authorized customer profile information.
+- Review bookings and membership status.
+- Avoid unnecessary exposure of personal information.
+- Use safe deactivation and retention procedures.
+
+### /admin/memberships
+- Manage packages and membership plans.
+- Configure price, duration, included credits, benefits, and active status.
+- Track usage and expiration.
+- Ensure membership credit updates are transactional.
+- Do not mark unpaid purchases as paid.
+
+### /admin/ai
+- Configure assistant availability.
+- Manage approved system instructions.
+- Review limited, privacy-conscious usage metrics.
+- Monitor tool errors and AI request limits.
+- Configure provider and model references without exposing API keys.
+- Apply feature flags to disable AI functionality.
+
+### /admin/analytics
+- Date filters.
+- Booking trends.
+- Occupancy by class.
+- Popular classes.
+- Cancellation trends.
+- Customer retention when enough data exists.
+- Revenue charts only from trustworthy payment records.
+- Export filtered reports only with appropriate permissions.
+
+### /admin/settings
+- Studio profile.
+- Contact details.
+- Business time zone.
+- Cancellation policy.
+- Booking rules.
+- Currency.
+- Notifications.
+- Public-site content settings.
+- Access controls.
+
+The admin interface must be responsive, accessible, and operationally useful.
+
+## 10. FIRESTORE DATA MODEL
+
+Design a documented Firestore schema using collections such as:
+
+users/{userId}
+instructors/{instructorId}
+classes/{classId}
+sessions/{sessionId}
+bookings/{bookingId}
+memberships/{membershipId}
+customer_memberships/{customerMembershipId}
+payments/{paymentId}
+ai_conversations/{conversationId}
+ai_usage/{usageId}
+studio_settings/{documentId}
+audit_logs/{logId}
+
+Use appropriate subcollections when needed.
+
+Suggested fields:
+
+users:
+- uid
+- displayName
+- email
+- role or trusted server-managed role mapping
+- preferences
+- createdAt
+- updatedAt
+- accountStatus
+
+classes:
+- title
+- slug
+- description
+- style
+- level
+- durationMinutes
+- price
+- currency
+- instructorIds
+- imageUrl
+- isPublished
+- createdAt
+- updatedAt
+
+sessions:
+- classId
+- instructorId
+- startsAt
+- endsAt
+- timeZone
+- location
+- capacity
+- bookedCount
+- status
+- createdAt
+- updatedAt
+
+bookings:
+- customerId
+- sessionId
+- bookingReference
+- status
+- paymentStatus
+- priceSnapshot
+- currency
+- idempotencyKey
+- createdAt
+- updatedAt
+- cancelledAt
+
+These are starting points, not a rigid schema. Refine them for Firestore query patterns and integrity.
+
+Document:
+- Required indexes.
+- Security Rules.
+- Data ownership.
+- Transaction boundaries.
+- Retention policy.
+- Timestamp handling.
+- Currency representation.
+- Denormalized fields and their consistency rules.
+
+Use integer minor units for monetary values, such as cents, where appropriate. Do not rely on floating-point currency arithmetic.
+
+Ensure all session times are stored as timestamps and interpreted with an explicit time zone.
+
+Use Firestore server timestamps for trusted audit fields.
+
+## 11. API DESIGN
+
+Create a versioned REST API.
+
+Example endpoints:
+
+GET /api/v1/health
+GET /api/v1/classes
+GET /api/v1/classes/:id
+GET /api/v1/sessions
+GET /api/v1/sessions/:id
+GET /api/v1/instructors
+GET /api/v1/instructors/:id
+GET /api/v1/pricing
+
+POST /api/v1/bookings
+GET /api/v1/me/bookings
+GET /api/v1/me/bookings/:id
+POST /api/v1/me/bookings/:id/cancel
+
+GET /api/v1/me/profile
+PATCH /api/v1/me/profile
+GET /api/v1/me/membership
+
+POST /api/v1/ai/chat
+POST /api/v1/ai/recommendations
+
+Admin endpoints must be separately protected:
+GET /api/v1/admin/dashboard
+GET /api/v1/admin/bookings
+POST /api/v1/admin/classes
+PATCH /api/v1/admin/classes/:id
+DELETE /api/v1/admin/classes/:id
+POST /api/v1/admin/sessions
+PATCH /api/v1/admin/sessions/:id
+GET /api/v1/admin/customers
+GET /api/v1/admin/analytics
+GET /api/v1/admin/settings
+PATCH /api/v1/admin/settings
+
+Use consistent JSON responses, appropriate HTTP status codes, request validation, pagination, filtering, and safe error messages.
+
+Do not expose stack traces, private database details, internal prompts, or secrets in API responses.
+
+Generate OpenAPI documentation for the implemented API.
+
+## 12. SECURITY
+
+Implement:
+- Firebase ID token verification on protected endpoints.
+- Server-side role-based access control.
+- Strict input validation.
+- CORS allowlists.
+- Rate limiting for login-sensitive and AI endpoints.
+- Request size limits.
+- Safe logging with no tokens or passwords.
+- Environment-based secret management.
+- Firestore Security Rules denying unauthorized direct access.
+- Ownership checks for customer resources.
+- Audit logging for sensitive administrative changes.
+- Protection against booking replay and duplicate submissions.
+- Dependency updates and secure configuration.
+- Appropriate account deletion and data retention behavior.
+
+Never store plaintext passwords.
+
+Never commit .env files, service-account JSON, API keys, or private credentials.
+
+Include a safe .env.example containing placeholders only.
+
+## 13. DESIGN DETAILS AND MICROINTERACTIONS
+
+Create a coherent design system with reusable components.
+
+Public components:
+- Navbar.
+- Mobile navigation.
+- Hero.
+- Class card.
+- Instructor card.
+- Schedule item.
+- Booking summary.
+- Pricing card.
+- AI chat widget.
+- AI recommendation card.
+- Toast notifications.
+- Modal and confirmation dialog.
+- Skeleton loaders.
+- Empty states.
+- Error states.
+- Footer.
+
+Admin components:
+- Sidebar.
+- Admin header.
+- Metric cards.
+- Data tables.
+- Filter panels.
+- Search.
+- Date-range selector.
+- Status badges.
+- Charts.
+- Forms.
+- Confirmation dialogs.
+- Pagination.
+- Audit history.
+
+Microinteractions:
+- Subtle fade and slide transitions.
+- Button feedback.
+- Calm loading indicators.
+- Glass panels with careful blur.
+- Smooth navigation.
+- Clear confirmation feedback.
+- Responsive hover states for desktop.
+- Touch-friendly controls on mobile.
+
+Avoid excessive animation, distracting backgrounds, giant rounded cards everywhere, and unreadable low-contrast glass surfaces.
+
+## 14. ACCESSIBILITY AND RESPONSIVENESS
+
+Support:
+- Mobile, tablet, and desktop.
+- Keyboard navigation.
+- Accessible form labels.
+- Screen-reader-friendly controls.
+- Visible focus indicators.
+- Sufficient color contrast.
+- Reduced-motion preferences.
+- Clear error messages.
+- Appropriate loading announcements.
+- Responsive tables or mobile-friendly alternatives.
+
+Target WCAG 2.2 AA practices where feasible.
+
+## 15. TESTING
+
+Implement automated tests for:
+
+Backend:
+- Booking creation.
+- Booking capacity.
+- Concurrent booking attempts.
+- Duplicate booking prevention.
+- Idempotency.
+- Cancellation rules.
+- Authentication.
+- Role authorization.
+- Resource ownership.
+- AI tool authorization.
+- Input validation.
+- Membership credit integrity.
+
+Frontend:
+- Route navigation.
+- Admin route protection.
+- Booking flow.
+- Form validation.
+- Loading and error states.
+- Responsive layouts.
+- Authentication states.
+
+Integration:
+- Firebase emulator where applicable.
+- Go API integration tests.
+- Firestore transaction tests.
+- AI provider mocked tests.
+- End-to-end booking flow.
+
+Run available tests and fix failures before claiming completion.
+
+## 16. DEFINITION OF DONE
+
+The project is not complete merely because the landing page looks good.
+
+Completion requires:
+1. Public pages render correctly.
+2. Admin is separated at /admin.
+3. Backend runs locally.
+4. Firebase configuration is documented.
+5. Authentication works.
+6. Server-side authorization works.
+7. Classes and sessions are backed by Firestore.
+8. Booking is a real backend operation.
+9. Booking capacity cannot be exceeded under concurrent requests.
+10. Customers can view their own bookings.
+11. Admins can manage classes and schedules.
+12. AI recommendations use actual class and schedule data.
+13. AI booking actions require explicit confirmation.
+14. No secrets are exposed.
+15. Responsive layouts and error states work.
+16. Tests and setup instructions are provided.
+17. Production deployment instructions are included.
+18. Unimplemented integrations are clearly identified.
+
+## 17. IMPLEMENTATION WORKFLOW
+
+Work in phases and verify each phase before continuing.
+
+Phase 1: Inspect the existing repository and identify its framework, current files, and constraints. Do not overwrite useful existing work.
+
+Phase 2: Write a concise architecture document, project directory tree, data model, API plan, route map, and environment variable list.
+
+Phase 3: Build the visual design system and public landing page.
+
+Phase 4: Implement the Go backend, Firebase initialization, health endpoint, configuration, logging, and error handling.
+
+Phase 5: Implement Firestore repositories, classes, sessions, and public APIs.
+
+Phase 6: Implement Firebase authentication, authorization, user accounts, and protected admin routes.
+
+Phase 7: Implement booking transactions, cancellation rules, and customer booking history.
+
+Phase 8: Build the admin dashboard and management workflows.
+
+Phase 9: Integrate the real AI provider and controlled tool-calling workflow.
+
+Phase 10: Add analytics, tests, security review, responsive refinements, and deployment documentation.
+
+At every phase:
+- List the files created or modified.
+- Explain the architecture briefly.
+- Run relevant checks and tests.
+- Fix errors before proceeding.
+- Keep documentation up to date.
+
+Do not stop after creating a plan or a static mockup. Implement the application in the current repository.
+
+Do not claim a feature is working unless its implementation and relevant verification support that claim.
+
+If credentials or external service configuration are missing, build the integration boundary, document the exact setup steps, and continue with features that can be tested locally.
+
+Start by inspecting the repository and reporting the proposed architecture and first implementation milestone. Then begin implementation.

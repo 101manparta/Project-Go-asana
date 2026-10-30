@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: ASANA-Yoga Platform API
+  description: Production-grade RESTful API for class discovery, transactional capacity booking, membership management, ASANA Wellness Guide, and separate administrative governance.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local Full-Stack Development Server
+  - url: https://asanayoga.wellness/api/v1
+    description: Production Go Gin Backend on Cloud Run
+paths:
+  /health:
+    get:
+      summary: API health and AI engine status
+      responses:
+        '200':
+          description: API is operational
+  /classes:
+    get:
+      summary: List all published yoga modalities
+      parameters:
+        - name: style
+          in: query
+          schema:
+            type: string
+        - name: level
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of yoga classes
+  /classes/{id}:
+    get:
+      summary: Get class details with upcoming scheduled sessions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Class details
+  /sessions:
+    get:
+      summary: Get scheduled studio sessions with real seat availability
+      responses:
+        '200':
+          description: List of sessions
+  /bookings:
+    post:
+      summary: Atomically reserve a mat for a session
+      security:
+        - FirebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sessionId
+              properties:
+                sessionId:
+                  type: string
+                idempotencyKey:
+                  type: string
+      responses:
+        '201':
+          description: Reservation confirmed with booking reference
+        '409':
+          description: Capacity exceeded or duplicate booking
+  /me/bookings:
+    get:
+      summary: List customer's own active and past reservations
+      security:
+        - FirebaseAuth: []
+      responses:
+        '200':
+          description: User bookings
+  /me/bookings/{id}/cancel:
+    post:
+      summary: Cancel reservation and release capacity under policy window
+      security:
+        - FirebaseAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking cancelled and credit refunded
+        '400':
+          description: Cancellation window has passed
+  /ai/chat:
+    post:
+      summary: Conversational yoga guidance grounded in live studio catalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - messages
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Grounded AI response with optional structured class recommendations
+  /admin/dashboard:
+    get:
+      summary: Real-time studio operations telemetry
+      security:
+        - AdminRole: []
+      responses:
+        '200':
+          description: Studio metrics, occupancy rate, low enrollment alerts
+        '403':
+          description: Forbidden for non-administrators
+components:
+  securitySchemes:
+    FirebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AdminRole:
+      type: apiKey
+      in: header
+      name: X-User-Role
